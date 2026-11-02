@@ -1,52 +1,63 @@
-<p align="center"><img src="assets/banner.svg" alt="Aditya Kumar Rai: machine reasoning, medical imaging, efficient inference" width="100%"></p>
+<p align="center"><img src="assets/banner.svg" alt="Aditya Kumar Rai" width="100%"></p>
 
-I work on two questions:
+### Research interests
+**Reasoning under compute constraints** (test-time training, long chain-of-thought, budget allocation, abstraction benchmarks) · **learning from noisy labels in medical imaging** · **efficient inference** of large models on small GPUs.
 
-1. **How should a fixed compute budget be split between a small model that learns at test time and a large model that reasons?** Studied on ARC-AGI-2, the abstraction benchmark that frontier models still find hard.
-2. **When labels are noisy, is it better to change the model or fix the labels?** Studied on knee MRI, with 12 findings across multi-sequence scans.
-
-Both under hard limits: offline, a few consumer-class GPUs, a fixed number of hours.
+I like questions with a clean measurable answer: *where should the next GPU-hour go?* *Is the bottleneck the model or the labels?* *When does a validation set stop telling the truth?*
 
 ---
 
-## Reasoning under a compute budget · ARC-AGI-2
+### Research
 
-<p align="center"><img src="assets/arc_pipeline.svg" width="100%"></p>
+<table>
+<tr>
+<td width="38%" valign="top"><a href="https://github.com/ADITYAKUMARRAI2007/compute-allocation-arc-agi-2"><img src="assets/arc_compute_split.svg" width="100%"></a></td>
+<td valign="top">
 
-A 4B model with **test-time training** handles the puzzles it can learn quickly. A 27B reasoning model (**Qwen3.8-27B at `xhigh` effort**) spends the rest of a 12-hour budget writing answers directly. Serving 27B on 24 GB GPUs offline needed a quantised engine and a small **glibc binary patch** to run on Kaggle's image.
+**Where Should the Compute Go? Test-Time Training vs. Long Reasoning on ARC-AGI-2**<br>
+<sub>Technical report, 2026</sub>
 
-<table><tr>
-<td width="50%"><img src="assets/arc_compute_split.svg"></td>
-<td width="50%"><img src="assets/arc_effort.svg"></td>
-</tr><tr>
-<td><sub>Giving the reasoning model more of the same budget raised the hidden-set score from <b>29.72 to 33.19</b>.</sub></td>
-<td><sub>Effort settings are not monotonic: <code>medium</code> is worse than <code>low</code> because only <code>low</code>/<code>xhigh</code> add an instruction to the prompt.</sub></td>
-</tr></table>
+Under a fixed offline budget (12 h, 4 × 24 GB GPUs), moving time from a test-time-trained 4B model to a 27B reasoning model raised ARC-AGI-2 hidden-set accuracy **29.7% → 33.2%**. Effort settings are non-monotonic (a chat-template artefact), long reasoning needs 60–100k tokens, and most errors are wrong hypotheses that answer selection can't recover. Includes an in-place ELF patch to run a glibc-2.38 engine on glibc 2.35.
 
-**→ [arc-prize-2026-nvarc-qwen-hybrid](https://github.com/ADITYAKUMARRAI2007/arc-prize-2026-nvarc-qwen-hybrid)**: pipeline, ablations, negative results (code-writing answers, LLM-as-picker, candidate reconstruction).
+[report](https://github.com/ADITYAKUMARRAI2007/compute-allocation-arc-agi-2/blob/main/docs/REPORT.md) · [code](https://github.com/ADITYAKUMARRAI2007/compute-allocation-arc-agi-2)
+</td>
+</tr>
+<tr>
+<td width="38%" valign="top"><a href="https://github.com/ADITYAKUMARRAI2007/label-repair-knee-mri"><img src="assets/rsna_private.svg" width="100%"></a></td>
+<td valign="top">
+
+**Label Repair over Architecture Search: Multi-Finding Knee MRI Classification under Noisy Labels**<br>
+<sub>Technical report, 2026</sub>
+
+With weak, report-derived labels for 12 knee-MRI findings, four new architectures (3D, 2.5D, distilled) never earned blend weight, while relabelling the noisiest findings and per-finding specialists raised held-out macro AUC **0.942 → 0.944**. A 58-study expert set ranks models correctly but cannot resolve < 0.003 AUC.
+
+[report](https://github.com/ADITYAKUMARRAI2007/label-repair-knee-mri/blob/main/docs/REPORT.md) · [code](https://github.com/ADITYAKUMARRAI2007/label-repair-knee-mri) · [inference notebook](https://www.kaggle.com/code/adityakumarrai0401/rsna-knee-label-ft-coatnet-specialists-blend)
+</td>
+</tr>
+<tr>
+<td width="38%" valign="top"><a href="https://github.com/ADITYAKUMARRAI2007/compute-allocation-arc-agi-2"><img src="assets/arc_effort.svg" width="100%"></a></td>
+<td valign="top">
+
+**Note: reasoning effort is not monotonic**<br>
+<sub>Short note, 2026</sub>
+
+For Qwen3.8-27B on ARC-AGI-2, `medium` effort scores below `low` because the chat template injects instructions only for `low` and `xhigh`. A one-line configuration choice moves accuracy by ~3×, so check what an "effort" knob actually changes before using it.
+</td>
+</tr>
+</table>
 
 ---
 
-## Labels over architectures · knee MRI
+### Things I believe more strongly after this year
+1. **Measure on the distribution you will be judged on.** Small public validations mispredicted held-out results in both projects, in both directions.
+2. **Allocation and budgets beat harness cleverness** for reasoning models at fixed cost.
+3. **Generation bounds selection.** If the right answer is never produced, no judge, vote or reranker can find it.
+4. **Labels are a model component.** For noisy medical data, fixing the weakest labels moved held-out metrics when new architectures did not.
 
-<p align="center"><img src="assets/rsna_system.svg" width="100%"></p>
+### Playbooks
+**[kaggle-competition-playbooks](https://github.com/ADITYAKUMARRAI2007/kaggle-competition-playbooks)**: 25 structured research playbooks (validation design, label engineering, ensembling, vision, LLMs, time series, …) distilled from top solutions, with case studies.
 
-<table><tr>
-<td width="55%"><img src="assets/rsna_private.svg"></td>
-<td width="45%"><sub>New backbones (3D, EfficientNetV2, distilled students) never beat the blend. What moved the <b>held-out private score (0.942 → 0.944 macro AUC)</b> was rebuilding the noisiest labels from images and reports, per-finding specialists, and gating every change on a hand-checked gold set.</sub></td>
-</tr></table>
+### Also building
+Agent systems: [orderguard](https://github.com/ADITYAKUMARRAI2007/orderguard) (deterministic authorization for autonomous commerce agents) · [thermal-chaos-arena](https://github.com/ADITYAKUMARRAI2007/thermal-chaos-arena) (control benchmark for fragile GPU clusters) · [genai-cli](https://github.com/ADITYAKUMARRAI2007/genai-cli) (tool-calling agent CLI).
 
-**→ [rsna-knee-mri-abnormality-detection](https://github.com/ADITYAKUMARRAI2007/rsna-knee-mri-abnormality-detection)** · [final notebook](https://www.kaggle.com/code/adityakumarrai0401/rsna-knee-label-ft-coatnet-specialists-blend)
-
----
-
-## Notes I keep coming back to
-* **Measure on the distribution you are judged on.** Small public-set checks repeatedly mispredicted held-out results, in both directions.
-* **Effort, budget and allocation matter more than harness cleverness** for reasoning models at a fixed cost.
-* **A wrong rule is not a typo.** Most reasoning failures were the wrong hypothesis, not slips in writing the answer, so fixing selection can't recover them.
-
-**→ [kaggle-competition-playbooks](https://github.com/ADITYAKUMARRAI2007/kaggle-competition-playbooks)**: 25 research playbooks distilled from winning solutions across vision, language, LLMs and tabular data.
-
----
-
-<sub>Also building agent systems: <a href="https://github.com/ADITYAKUMARRAI2007/orderguard">orderguard</a> (execution security for autonomous commerce agents) · <a href="https://github.com/ADITYAKUMARRAI2007/thermal-chaos-arena">thermal-chaos-arena</a> (control arena for fragile GPU clusters) · <a href="https://github.com/ADITYAKUMARRAI2007/genai-cli">genai-cli</a>. On Kaggle: <a href="https://www.kaggle.com/adityakumarrai0401">adityakumarrai0401</a>.</sub>
+<sub>Benchmarks used: ARC Prize 2026 (ARC-AGI-2) and RSNA Knee Abnormality Detection 2026, both hosted on Kaggle ([adityakumarrai0401](https://www.kaggle.com/adityakumarrai0401)).</sub>
